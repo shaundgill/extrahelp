@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  background: #F6F5F1;
+}
+
+body {
+  margin: 0;
+  color: #1B2430;
+  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
+}
+
+input,
+select,
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: #E7F3F0;
+}
