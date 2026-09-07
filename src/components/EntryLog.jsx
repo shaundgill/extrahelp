@@ -1,6 +1,6 @@
 import { formatDateLong } from '../lib/dateUtils'
 
-export default function EntryLog({ entries, onDelete }) {
+export default function EntryLog({ entries, onDelete, onEdit, editingId }) {
   const sorted = [...entries].sort((a, b) => (a.date > b.date ? -1 : 1))
 
   if (sorted.length === 0) {
@@ -19,8 +19,14 @@ export default function EntryLog({ entries, onDelete }) {
         {sorted.map((e) => {
           const ap = e.extras.filter((x) => x.type === 'AP')
           const doc = e.extras.filter((x) => x.type === 'Doc')
+          const isEditing = editingId === e.id
           return (
-            <div key={e.id} className="flex items-start justify-between gap-3 border-b border-line pb-3 last:border-0 last:pb-0">
+            <div
+              key={e.id}
+              className={`flex items-start justify-between gap-3 border-b border-line pb-3 last:border-0 last:pb-0 ${
+                isEditing ? 'bg-teal-50 -mx-2 px-2 rounded-md' : ''
+              }`}
+            >
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-ink">
                   {formatDateLong(e.date)}
@@ -42,13 +48,22 @@ export default function EntryLog({ entries, onDelete }) {
                   )}
                 </div>
               </div>
-              <button
-                onClick={() => onDelete(e.id)}
-                aria-label={`Delete entry for ${e.date}`}
-                className="text-inksoft hover:text-alert text-sm shrink-0"
-              >
-                Delete
-              </button>
+              <div className="flex gap-3 shrink-0">
+                <button
+                  onClick={() => onEdit(e)}
+                  aria-label={`Edit entry for ${e.date}`}
+                  className="text-inksoft hover:text-teal-600 text-sm"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => onDelete(e.id)}
+                  aria-label={`Delete entry for ${e.date}`}
+                  className="text-inksoft hover:text-alert text-sm"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           )
         })}

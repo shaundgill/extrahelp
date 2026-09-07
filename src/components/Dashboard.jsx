@@ -11,6 +11,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [editingEntry, setEditingEntry] = useState(null)
 
   useEffect(() => {
     loadEntries()
@@ -39,21 +40,32 @@ export default function Dashboard() {
     setLoading(false)
   }
 
-  async function handleSave({ date, census, extras }) {
+  async function handleSave({ id, originalDate, date, census, extras }) {
     setSaving(true)
     setErrorMsg('')
     const { error } = await supabase
       .from('extra_help_entries')
-      .upsert(
-        { entry_date: date, census, extras },
-        { onConflict: 'entry_date' }
-      )
-    setSaving(false)
+      .upsert({ entry_date: date, census, extras }, { onConflict: 'entry_date' })
+
     if (error) {
+      setSaving(false)
       setErrorMsg(error.message)
-    } else {
-      await loadEntries()
+      return
     }
+
+    // If editing and the date changed, the upsert above created/updated a row
+    // under the new date, so the old row (different date, same id) is now a
+    // stale duplicate — remove it.
+    if (id && originalDate && originalDate !== date) {
+      const { error: deleteError } = await supabase.from('extra_help_entries').delete().eq('id', id)
+      if (deleteError) {
+        setErrorMsg(deleteError.message)
+      }
+    }
+
+    setSaving(false)
+    setEditingEntry(null)
+    await loadEntries()
   }
 
   async function handleDelete(id) {
@@ -62,7 +74,13 @@ export default function Dashboard() {
       setErrorMsg(error.message)
     } else {
       setEntries((prev) => prev.filter((e) => e.id !== id))
+      if (editingEntry?.id === id) setEditingEntry(null)
     }
+  }
+
+  function handleEdit(entry) {
+    setEditingEntry(entry)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const metrics = useMemo(() => {
@@ -70,25 +88,42 @@ export default function Dashboard() {
     let apCount = 0
     let docCount = 0
     let daysWithExtra = 0
+    let censusExtraSum = 0
+    let censusExtraN = 0
+    let censusNormalSum = 0
+    let censusNormalN = 0
+
     entries.forEach((e) => {
       const ap = e.extras.filter((x) => x.type === 'AP').length
       const doc = e.extras.filter((x) => x.type === 'Doc').length
       apCount += ap
       docCount += doc
-      if (ap + doc > 0) daysWithExtra++
+      const hasExtra = ap + doc > 0
+      if (hasExtra) daysWithExtra++
+      if (e.census != null) {
+        if (hasExtra) {
+          censusExtraSum += e.census
+          censusExtraN++
+        } else {
+          censusNormalSum += e.census
+          censusNormalN++
+        }
+      }
     })
+
     const pct = daysLogged ? Math.round((daysWithExtra / daysLogged) * 100) : 0
-    return { daysLogged, apCount, docCount, daysWithExtra, pct }
+    const avgCensusExtra = censusExtraN ? Math.round(censusExtraSum / censusExtraN) : null
+    const avgCensusNormal = censusNormalN ? Math.round(censusNormalSum / censusNormalN) : null
+
+    return { daysLogged, apCount, docCount, daysWithExtra, pct, avgCensusExtra, avgCensusNormal }
   }, [entries])
 
   return (
     <div className="min-h-screen bg-paper">
       <header className="border-b border-line bg-white">
-        <div className="max-w-4xl mx-auto px-4 py-5 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-inksoft">Hospitalist coverage · since {TRACKING_START_DATE}</p>
-            <h1 className="font-serif text-2xl text-ink">Extra help tracker</h1>
-          </div>
+        <div className="max-w-4xl mx-auto px-4 py-5">
+          <p className="text-xs text-inksoft">Hospitalist coverage · since {TRACKING_START_DATE}</p>
+          <h1 className="font-serif text-2xl text-ink">Extra help tracker</h1>
         </div>
       </header>
 
@@ -108,6 +143,19 @@ export default function Dashboard() {
             <MetricCard label="Extra AP instances" value={metrics.apCount} accent="text-teal-600" />
             <MetricCard label="Extra physician instances" value={metrics.docCount} accent="text-amber-600" />
           </div>
+          {(metrics.avgCensusExtra != null || metrics.avgCensusNormal != null) && (
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <MetricCard
+                label="Avg census — extra help days"
+                value={metrics.avgCensusExtra ?? '—'}
+                accent="text-alert"
+              />
+              <MetricCard
+                label="Avg census — normal days"
+                value={metrics.avgCensusNormal ?? '—'}
+              />
+            </div>
+          )}
         </section>
 
         {errorMsg && (
@@ -117,8 +165,19 @@ export default function Dashboard() {
         <ExtraHelpChart entries={entries} />
 
         <div className="grid md:grid-cols-2 gap-6">
-          <EntryForm onSave={handleSave} saving={saving} />
-          <EntryLog entries={entries} onDelete={handleDelete} />
+          <EntryForm
+            onSave={handleSave}
+            saving={saving}
+            editingEntry={editingEntry}
+            onCancelEdit={() => setEditingEntry(null)}
+            existingDates={new Set(entries.map((e) => e.date))}
+          />
+          <EntryLog
+            entries={entries}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+            editingId={editingEntry?.id}
+          />
         </div>
 
         {loading && <p className="text-sm text-inksoft">Loading…</p>}
