@@ -40,3 +40,10 @@ export function monthLabel(iso) {
 export function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
+
+// Inclusive count of calendar days between two ISO dates (start and end both counted).
+export function daysBetweenInclusive(startISO, endISO) {
+  const start = new Date(startISO + 'T00:00:00')
+  const end = new Date(endISO + 'T00:00:00')
+  return Math.round((end - start) / 86400000) + 1
+}

@@ -22,6 +22,9 @@ function toDraft(extra) {
 }
 
 function resolveName(ex) {
+  if (ex.type === 'Doc') {
+    return ex.customName.trim() || 'Unnamed physician'
+  }
   if (ex.selection === OTHER) {
     return ex.customName.trim() || OTHER
   }
@@ -154,19 +157,31 @@ export default function EntryForm({ onSave, saving, editingEntry, onCancelEdit, 
                 <option value="AP">AP</option>
                 <option value="Doc">Physician</option>
               </select>
-              <select
-                value={ex.selection}
-                onChange={(e) => updateExtra(idx, 'selection', e.target.value)}
-                className="border border-line rounded-md px-2 py-2 text-sm flex-1 min-w-[140px]"
-              >
-                {rosterFor(ex.type).map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-              {ex.selection === OTHER && (
+              {ex.type === 'AP' ? (
+                <>
+                  <select
+                    value={ex.selection}
+                    onChange={(e) => updateExtra(idx, 'selection', e.target.value)}
+                    className="border border-line rounded-md px-2 py-2 text-sm flex-1 min-w-[140px]"
+                  >
+                    {rosterFor('AP').map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                  {ex.selection === OTHER && (
+                    <input
+                      type="text"
+                      placeholder="Enter name"
+                      value={ex.customName}
+                      onChange={(e) => updateExtra(idx, 'customName', e.target.value)}
+                      className="border border-line rounded-md px-2 py-2 text-sm flex-1 min-w-[140px]"
+                    />
+                  )}
+                </>
+              ) : (
                 <input
                   type="text"
-                  placeholder="Enter name"
+                  placeholder="Physician's name (optional)"
                   value={ex.customName}
                   onChange={(e) => updateExtra(idx, 'customName', e.target.value)}
                   className="border border-line rounded-md px-2 py-2 text-sm flex-1 min-w-[140px]"

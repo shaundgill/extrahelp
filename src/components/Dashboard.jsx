@@ -5,6 +5,7 @@ import EntryForm from './EntryForm'
 import ExtraHelpChart from './ExtraHelpChart'
 import EntryLog from './EntryLog'
 import { TRACKING_START_DATE, BASELINE } from '../lib/rosters'
+import { todayISO, daysBetweenInclusive } from '../lib/dateUtils'
 
 export default function Dashboard() {
   const [entries, setEntries] = useState([])
@@ -111,11 +112,12 @@ export default function Dashboard() {
       }
     })
 
-    const pct = daysLogged ? Math.round((daysWithExtra / daysLogged) * 100) : 0
+    const totalCalendarDays = Math.max(1, daysBetweenInclusive(TRACKING_START_DATE, todayISO()))
+    const pct = Math.round((daysWithExtra / totalCalendarDays) * 100)
     const avgCensusExtra = censusExtraN ? Math.round(censusExtraSum / censusExtraN) : null
     const avgCensusNormal = censusNormalN ? Math.round(censusNormalSum / censusNormalN) : null
 
-    return { daysLogged, apCount, docCount, daysWithExtra, pct, avgCensusExtra, avgCensusNormal }
+    return { daysLogged, apCount, docCount, daysWithExtra, totalCalendarDays, pct, avgCensusExtra, avgCensusNormal }
   }, [entries])
 
   return (
@@ -137,7 +139,7 @@ export default function Dashboard() {
             <MetricCard
               label="Days needing extra help"
               value={`${metrics.pct}%`}
-              sublabel={`${metrics.daysWithExtra} of ${metrics.daysLogged} days`}
+              sublabel={`${metrics.daysWithExtra} of ${metrics.totalCalendarDays} days`}
               accent={metrics.pct >= 50 ? 'text-alert' : undefined}
             />
             <MetricCard label="Extra AP instances" value={metrics.apCount} accent="text-teal-600" />

@@ -26,4 +26,6 @@ export const FLOAT_AP_NAMES = [
   'Other / unnamed',
 ]
 
-export const DOC_EXTRA_NAMES = ['Physician 6', 'Other / unnamed']
+// APs have a known float pool to pick from. Extra physicians don't have a
+// fixed roster (no more "Physician 6" placeholder) — just type the name.
+export const DOC_EXTRA_NAMES = ['Other / unnamed']
