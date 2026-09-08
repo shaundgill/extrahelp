@@ -3,9 +3,12 @@ import { supabase } from '../supabaseClient'
 import MetricCard from './MetricCard'
 import EntryForm from './EntryForm'
 import ExtraHelpChart from './ExtraHelpChart'
+import CensusChart from './CensusChart'
+import CompositionDonut from './CompositionDonut'
 import EntryLog from './EntryLog'
 import { TRACKING_START_DATE, BASELINE } from '../lib/rosters'
 import { todayISO, daysBetweenInclusive } from '../lib/dateUtils'
+import { groupEntries } from '../lib/grouping'
 
 export default function Dashboard() {
   const [entries, setEntries] = useState([])
@@ -13,6 +16,7 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [editingEntry, setEditingEntry] = useState(null)
+  const [granularity, setGranularity] = useState('Week')
 
   useEffect(() => {
     loadEntries()
@@ -112,6 +116,8 @@ export default function Dashboard() {
     return { daysLogged, apCount, docCount, daysWithExtra, totalCalendarDays, pct, avgCensusExtra }
   }, [entries])
 
+  const grouped = useMemo(() => groupEntries(entries, granularity), [entries, granularity])
+
   return (
     <div className="min-h-screen bg-paper">
       <header className="border-b border-line bg-white">
@@ -152,7 +158,25 @@ export default function Dashboard() {
           <p className="text-sm text-alert bg-white border border-line rounded-md px-3 py-2">{errorMsg}</p>
         )}
 
-        <ExtraHelpChart entries={entries} />
+        <div className="flex justify-end">
+          <div className="flex border border-line rounded-md overflow-hidden text-xs bg-white">
+            {['Week', 'Month', 'Day'].map((g) => (
+              <button
+                key={g}
+                onClick={() => setGranularity(g)}
+                className={`px-3 py-1.5 ${
+                  granularity === g ? 'bg-ink text-white' : 'text-inksoft hover:bg-paper'
+                }`}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <ExtraHelpChart data={grouped} />
+        <CensusChart data={grouped} />
+        <CompositionDonut apCount={metrics.apCount} docCount={metrics.docCount} />
 
         <div className="grid md:grid-cols-2 gap-6">
           <EntryForm
