@@ -91,8 +91,6 @@ export default function Dashboard() {
     let daysWithExtra = 0
     let censusExtraSum = 0
     let censusExtraN = 0
-    let censusNormalSum = 0
-    let censusNormalN = 0
 
     entries.forEach((e) => {
       const ap = e.extras.filter((x) => x.type === 'AP').length
@@ -101,23 +99,17 @@ export default function Dashboard() {
       docCount += doc
       const hasExtra = ap + doc > 0
       if (hasExtra) daysWithExtra++
-      if (e.census != null) {
-        if (hasExtra) {
-          censusExtraSum += e.census
-          censusExtraN++
-        } else {
-          censusNormalSum += e.census
-          censusNormalN++
-        }
+      if (e.census != null && hasExtra) {
+        censusExtraSum += e.census
+        censusExtraN++
       }
     })
 
     const totalCalendarDays = Math.max(1, daysBetweenInclusive(TRACKING_START_DATE, todayISO()))
     const pct = Math.round((daysWithExtra / totalCalendarDays) * 100)
     const avgCensusExtra = censusExtraN ? Math.round(censusExtraSum / censusExtraN) : null
-    const avgCensusNormal = censusNormalN ? Math.round(censusNormalSum / censusNormalN) : null
 
-    return { daysLogged, apCount, docCount, daysWithExtra, totalCalendarDays, pct, avgCensusExtra, avgCensusNormal }
+    return { daysLogged, apCount, docCount, daysWithExtra, totalCalendarDays, pct, avgCensusExtra }
   }, [entries])
 
   return (
@@ -145,16 +137,12 @@ export default function Dashboard() {
             <MetricCard label="Extra AP instances" value={metrics.apCount} accent="text-teal-600" />
             <MetricCard label="Extra physician instances" value={metrics.docCount} accent="text-amber-600" />
           </div>
-          {(metrics.avgCensusExtra != null || metrics.avgCensusNormal != null) && (
-            <div className="grid grid-cols-2 gap-3 mt-3">
+          {metrics.avgCensusExtra != null && (
+            <div className="mt-3 max-w-[calc(50%-0.375rem)]">
               <MetricCard
-                label="Avg census — extra help days"
-                value={metrics.avgCensusExtra ?? '—'}
+                label="Avg census on extra-help days"
+                value={metrics.avgCensusExtra}
                 accent="text-alert"
-              />
-              <MetricCard
-                label="Avg census — normal days"
-                value={metrics.avgCensusNormal ?? '—'}
               />
             </div>
           )}
