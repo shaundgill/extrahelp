@@ -4,6 +4,7 @@ import MetricCard from './MetricCard'
 import EntryForm from './EntryForm'
 import ExtraHelpChart from './ExtraHelpChart'
 import CensusChart from './CensusChart'
+import CensusTrendChart from './CensusTrendChart'
 import CompositionDonut from './CompositionDonut'
 import EntryLog from './EntryLog'
 import { TRACKING_START_DATE, BASELINE } from '../lib/rosters'
@@ -175,7 +176,8 @@ export default function Dashboard() {
         </div>
 
         <ExtraHelpChart data={grouped} />
-        <CensusChart data={grouped} />
+        <CensusChart data={grouped} granularity={granularity} />
+        <CensusTrendChart entries={entries} />
         <CompositionDonut apCount={metrics.apCount} docCount={metrics.docCount} />
 
         <div className="grid md:grid-cols-2 gap-6">

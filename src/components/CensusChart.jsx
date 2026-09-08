@@ -32,7 +32,7 @@ function CustomTooltip({ active, payload, label }) {
   )
 }
 
-export default function CensusChart({ data }) {
+export default function CensusChart({ data, granularity }) {
   const withCensus = useMemo(() => data.filter((d) => d.census != null), [data])
 
   const { low, high } = useMemo(() => {
@@ -47,7 +47,7 @@ export default function CensusChart({ data }) {
   if (withCensus.length === 0) {
     return (
       <div className="bg-white border border-line rounded-lg p-5">
-        <h2 className="font-serif text-lg text-ink mb-1">Census</h2>
+        <h2 className="font-serif text-lg text-ink mb-1">Census by {granularity.toLowerCase()}</h2>
         <p className="text-sm text-inksoft">No census logged yet.</p>
       </div>
     )
@@ -55,8 +55,8 @@ export default function CensusChart({ data }) {
 
   return (
     <div className="bg-white border border-line rounded-lg p-5">
-      <h2 className="font-serif text-lg text-ink mb-1">Census</h2>
-      <p className="text-xs text-inksoft mb-3">Average daily census for the period — color shows how it stacks up against your own recent range.</p>
+      <h2 className="font-serif text-lg text-ink mb-1">Census by {granularity.toLowerCase()}</h2>
+      <p className="text-xs text-inksoft mb-3">Average daily census per period — color shows how it stacks up against your own recent range.</p>
 
       <div className="flex gap-4 mb-3 text-xs text-inksoft">
         <span className="flex items-center gap-1.5">
